@@ -9,9 +9,12 @@ Plays a game of blackjack repeatedly
 from blackjack import Blackjack
 from constants import *
 
-def playBlackjack(bet):
+def playBlackjack(bet, bank):
     """
     Plays a single game of Blackjack
+
+    Bet: The amount of money the player wishes to bet on this game
+    Bank: The total amount of cash the player has
     """
     blackjack = Blackjack(bet)
 
@@ -22,7 +25,10 @@ def playBlackjack(bet):
     # Take the dealer's turn
     blackjack.takeDealerTurn()
     # Show the results of the game
-    blackjack.showResults()
+    result = blackjack.showResults()
+
+    print(f"After that game, you have ${bank + result}.\n")
+    return bank + result
 
 
 def playGames():
@@ -30,11 +36,19 @@ def playGames():
     Continuously plays a series of Blackjack games
     """
     playAgain = "Y"
+    bank = DEFAULT_BANK_AMOUNT # The amount of money you have to bet
+    print(f"\nYour starting bank balance is ${bank}.")
 
     while playAgain.upper() == "Y":
-        bet = DEFAULT_BET
-        playBlackjack(bet=bet)
+        bet = input(BETTING_MSG)
+        bet = int(bet)
+        while (bet > bank or bet < LOWER_BETTING_LIMIT or bet > UPPER_BETTING_LIMIT):
+            bet = int(input(BETTING_ERROR_MSG))
+
+        bank = playBlackjack(bet=bet, bank=bank)
+
         playAgain = input("Do you want to play again? (Y/N)")
+    print(f"Your ending bank balance is ${bank}.")
 
 
 # Main entry point

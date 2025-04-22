@@ -53,7 +53,10 @@ class Blackjack():
 
     def deal(self):
         """
-        Deals out 2 cards each to the player and dealer
+        Deals out 2 cards each to the player and dealer. Then,
+        shows the board and checks if the player can purchase
+        insurance, double their bet, or split their cards. Finally, it
+        checks if the player has a natural blackjack.
         """
         # Deal out the first 4 cards
         iteration = 0
@@ -66,7 +69,7 @@ class Blackjack():
                 self.dealerHand.append(randomCard)
             iteration += 1
 
-        print(f"~~~~~ Starting blackjack game! ~~~~~")
+        print(f"\n~~~~~ Starting blackjack game! ~~~~~")
         print(f"You are playing for ${self.bet}.")
         self.printBoard(showDealerCards=False)
 
@@ -82,21 +85,22 @@ class Blackjack():
             pass
 
         # Check if the player or dealer has a natural blackjack
-        if self.getHandValue(self.playerHand) == 21 or self.getHandValue(self.dealerHand) == 21:
+        if self.getHandValue(self.playerHand) == BLACKJACK: # or self.getHandValue(self.dealerHand) == BLACKJACK:
             self.gameEnded = True
             self.naturalBlackjack = True
         
     def takePlayerTurn(self):
         """
-        Takes the player's turn (plays until the player stands)
+        Takes the player's turn (By hitting until the player chooses to
+        stand or reaches 5 cards in their hand).
         """
-        while len(self.playerHand) < 6:
+        while len(self.playerHand) <= MAX_CARD_HAND:
             if self.gameEnded:
                 return
 
-            action = input("Would you like to stand or hit? (stand/hit)")
+            action = input("Would you like to stand or hit? (stand/hit) ")
             while action not in VALID_ACTIONS:
-                action = input("Would you like to stand or hit? (stand/hit)")
+                action = input("Would you like to stand or hit? (stand/hit) ")
         
             if action.upper() == "HIT":
                 self.hit(self.playerHand)
@@ -104,6 +108,7 @@ class Blackjack():
             else:
                 self.stand()
                 return
+
 
     def takeDealerTurn(self):
         """
@@ -115,6 +120,7 @@ class Blackjack():
         while self.getHandValue(self.dealerHand) < 17:
             self.hit(self.dealerHand)
 
+
     def stand(self):
         """
         The player stands
@@ -124,42 +130,61 @@ class Blackjack():
 
     def hit(self, targetDeck):
         """
-        Hits (gets a new card)
+        The player hits (gets a new card)
+
+        targetDeck: The deck of the player/dealer who is hitting
         """
         cardNumber = random.randint(0, len(self.deck) - 1)
         newCard = self.deck.pop(cardNumber)
         targetDeck.append(newCard)
 
         # Check if the player/dealer hitting has busted
-        if self.getHandValue(targetDeck) > 21:
+        if self.getHandValue(targetDeck) >= BUST_THRESHOLD:
             self.gameEnded = True
 
     
     def showResults(self):
         """
-        Show the results of the blackjack game. This function should only be
-        called once the game has ended
+        Shows the results of the blackjack game. This function should only be
+        called once the game has ended.
+
+        Returns the amount of money the player has made in this blackjack game. A
+        positive amount means they made money, while a negative amount means they
+        lost money to the dealer.
         """
         # First, print the board out
         self.printBoard(showDealerCards=True)
 
-        # Print out the winner
-        if self.getHandValue(self.playerHand) > 21:
+        # Print out the winner and return the monetary change
+
+        # The player busts
+        if self.getHandValue(self.playerHand) >= BUST_THRESHOLD:
             print(DEALER_WON.format(bet=self.bet))
+            return -1 * self.bet
+        # There is a tie
         elif self.getHandValue(self.playerHand) == self.getHandValue(self.dealerHand):
             print(TIE)
-        elif self.getHandValue(self.dealerHand) < self.getHandValue(self.playerHand) or self.getHandValue(self.dealerHand) > 21:
+            return 0
+        # The player wins
+        elif self.getHandValue(self.dealerHand) < self.getHandValue(self.playerHand) or \
+                self.getHandValue(self.dealerHand) >= BUST_THRESHOLD:
             if self.naturalBlackjack:
-                print(PLAYER_WON.format(bet=self.bet * 1.5))
+                print(PLAYER_WON_NATURAL.format(bet=self.bet * NATURAL_BLACKJACK_MULTIPLIER))
+                return self.bet * NATURAL_BLACKJACK_MULTIPLIER
             else:
                 print(PLAYER_WON.format(bet=self.bet))
+                return self.bet
+        # The dealer wins
         else:
             print(DEALER_WON.format(bet=self.bet))
+            return -1 * self.bet
         
 
     def canSplit(self):
         """
-        Checks if the player is allowed to split their deck
+        Checks if the player is allowed to split their deck.
+
+        Returns True if they can split, and False otherwise.
         """
         if len(self.playerHand) != 2:
             return False
@@ -178,6 +203,8 @@ class Blackjack():
     def canDouble(self):
         """
         Checks if the player is allowed to double their bet
+
+        Returns True if they can double, and False otherwise.
         """
         if len(self.playerHand) != 2:
             return False
@@ -196,6 +223,8 @@ class Blackjack():
     def canPurchaseInsurance(self):
         """
         Checks if the player can purchase insurance
+
+        Returns True if they can purchase insurance, and False otherwise
         """
         if len(self.playerHand) != 2:
             return False
