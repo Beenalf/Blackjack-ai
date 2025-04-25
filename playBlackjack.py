@@ -22,6 +22,7 @@ def playBlackjack(bet, bank):
     blackjack.deal()
     # Take the player's turn
     blackjack.takePlayerTurn()
+    blackjack.takePlayerSecondTurn()
     # Take the dealer's turn
     blackjack.takeDealerTurn()
     # Show the results of the game
@@ -47,7 +48,7 @@ def playGames():
 
         bank = playBlackjack(bet=bet, bank=bank)
 
-        playAgain = input("Do you want to play again? (Y/N)")
+        playAgain = input("Do you want to play again? (Y/N) ")
     print(f"Your ending bank balance is ${bank}.")
 
 

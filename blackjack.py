@@ -107,6 +107,9 @@ class Blackjack():
         Takes the player's turn (By hitting until the player chooses to
         stand or reaches 5 cards in their hand).
         """
+        if self.hasSplit:
+            print(FIRST_HAND_MSG)
+
         while len(self.playerHand) <= MAX_CARD_HAND:
             if self.gameEnded:
                 return
@@ -128,6 +131,11 @@ class Blackjack():
         Takes the player's second turn (for their second hand after splitting).
         If the player has not split this hand, nothing will happen.
         """
+        if not self.hasSplit:
+            return
+        
+        print(SECOND_HAND_MSG)
+
         while len(self.playerHand2) <= MAX_CARD_HAND:
             if self.getHandValue(self.playerHand2) > BLACKJACK:
                 return
@@ -182,7 +190,27 @@ class Blackjack():
         Returns the amount of money the hand has won/lost against
         the dealer. This function also prints out the winner.
         """
-        return 0
+        # The player busts
+        if self.getHandValue(hand) >= BUST_THRESHOLD:
+            print(DEALER_WON.format(bet=self.bet))
+            return -1 * self.bet + self.profit
+        # There is a tie
+        elif self.getHandValue(hand) == self.getHandValue(self.dealerHand):
+            print(TIE)
+            return 0 + self.profit
+        # The player wins
+        elif self.getHandValue(self.dealerHand) < self.getHandValue(hand) or \
+                self.getHandValue(self.dealerHand) >= BUST_THRESHOLD:
+            if self.naturalBlackjack:
+                print(PLAYER_WON_NATURAL.format(bet=self.bet * NATURAL_BLACKJACK_MULTIPLIER))
+                return self.bet * NATURAL_BLACKJACK_MULTIPLIER + self.profit
+            else:
+                print(PLAYER_WON.format(bet=self.bet))
+                return self.bet + self.profit
+        # The dealer wins
+        else:
+            print(DEALER_WON.format(bet=self.bet))
+            return -1 * self.bet + self.profit
     
 
     def showResults(self):
@@ -199,28 +227,11 @@ class Blackjack():
         self.printBoard(showDealerCards=True)
 
         # Print out the winner and return the monetary change
+        result = self.getHandResults(self.playerHand)
+        if self.hasSplit:
+            result += self.getHandResults(self.playerHand2)
 
-        # The player busts
-        if self.getHandValue(self.playerHand) >= BUST_THRESHOLD:
-            print(DEALER_WON.format(bet=self.bet))
-            return -1 * self.bet + self.profit
-        # There is a tie
-        elif self.getHandValue(self.playerHand) == self.getHandValue(self.dealerHand):
-            print(TIE)
-            return 0 + self.profit
-        # The player wins
-        elif self.getHandValue(self.dealerHand) < self.getHandValue(self.playerHand) or \
-                self.getHandValue(self.dealerHand) >= BUST_THRESHOLD:
-            if self.naturalBlackjack:
-                print(PLAYER_WON_NATURAL.format(bet=self.bet * NATURAL_BLACKJACK_MULTIPLIER))
-                return self.bet * NATURAL_BLACKJACK_MULTIPLIER + self.profit
-            else:
-                print(PLAYER_WON.format(bet=self.bet))
-                return self.bet + self.profit
-        # The dealer wins
-        else:
-            print(DEALER_WON.format(bet=self.bet))
-            return -1 * self.bet + self.profit
+        return result
         
 
     def canSplit(self):
@@ -243,7 +254,7 @@ class Blackjack():
         if action.upper() == "Y":
             print(SPLIT_DECK)
             self.hasSplit = True
-            secondCard = self.playerHand[1]
+            secondCard = self.playerHand.pop(1)
             self.playerHand2.append(secondCard)
         else:
             print(DONT_SPLIT_DECK)
@@ -267,7 +278,7 @@ class Blackjack():
         Doubles the player's bet
         """
         if action.upper() == "Y":
-            print(DOUBLE_BET.format(self.bet * 2))
+            print(DOUBLE_BET.format(amount = self.bet * 2))
             self.hasDoubled = True
             self.bet *= 2
         else:
